@@ -1,28 +1,363 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
+
+<head>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Undead Gamejam</title>
+    <!-- Import p5.js library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            /* Prevent scrollbars */
+            background-color: #222;
+        }
 
-    <title>Sketch</title>
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
 
-    <link rel="stylesheet" type="text/css" href="style.css">
+<body>
 
-    <!-- Linking to the main p5.js library, which allows your code to use all 
-       p5 functions. Using this version while developing your code allows p5 
-       to provide more Friendly Error Messages if you mess something up...-->
-    <script src="libraries/p5.js"></script>
+    <script>
+        //Brayden and Jaydeep
+        //30/01/26
+        //Gamejam - Undead (wt)
 
-    <!-- Once your project is working completely, you can comment out the link
-       to p5.js above, and instead link to this minified version. The minified
-       version takes less space, and turns off Friendly Error Messages. This 
-       increases the speed of your program quite dramatically in some cases.-->
-    <!-- <script src="libraries/p5.min.js"></script> -->
+        const TILESINROW = 15;
+        let roomsLoaded = false;
+        let rooms = [];
+        let currentRoomID = 1;
+        let roomChangeCollision = [];
 
-    <script src="libraries/p5.sound.min.js"></script>
-  </head>
+        let addRoomIDNum = true;
+        let justSpawned = true;
+        let playerCharacter = 0;
 
-  <body>
-    <script src="sketch.js"></script>
-  </body>
+        let needsRespawn = false;
+
+        // Room Data as a 2D Array (List of Rows)
+        let roomData = [
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0], [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0], [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0], [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0], [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0], [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0], [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0], [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3], [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3], [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0], [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0], [2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3], [2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3], [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0], [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0], [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0], [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0], [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0], [2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0], [2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0], [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0], [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0], [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0], [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0], [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0], [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        ];
+
+        // Initialize rooms from the 2D array
+        processRoomData();
+
+        /**
+         * Represents the player character in the game.
+         */
+        class Player {
+            /**
+             * Creates a new Player instance and handles initial spawning logic based on the current room.
+             */
+            constructor() {
+                /** @type {number} The x-coordinate of the player on the screen. */
+                this.x = windowWidth / 2;
+                /** @type {number} The y-coordinate of the player on the screen. */
+                this.y = windowHeight / 2;
+
+                /** @type {number} The collision radius of the player. */
+                this.radius = windowHeight / 30;
+
+                // --- UPDATED SPAWN LOGIC ---
+                let room = rooms[currentRoomID - 1];
+                if (room) {
+                    // Condition: Game Start OR Moving Forward -> Spawn near LEFT door (Tile 2)
+                    if (justSpawned === true || addRoomIDNum === true) {
+                        for (let y = 0; y < room.length; y++) {
+                            for (let x = 0; x < room[y].length; x++) {
+                                // Find Tile 2 (The Left Entrance/Exit)
+                                if (room[y][x] === 2) {
+                                    // Check if the tile to the RIGHT is a white square (1)
+                                    if (room[y][x + 1] === 1) {
+                                        this.x = (windowWidth / 2 - windowHeight / 2) + (x + 1) * windowHeight / 15 + windowHeight / 30;
+                                        this.y = windowHeight / 30 + y * windowHeight / 15 + windowHeight / 30;
+                                        return;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    // Condition: Moving Backward -> Spawn near RIGHT door (Tile 3)
+                    else {
+                        for (let y = 0; y < room.length; y++) {
+                            for (let x = 0; x < room[y].length; x++) {
+                                // Find Tile 3 (The Right Entrance/Exit)
+                                if (room[y][x] === 3) {
+                                    // Check if the tile to the LEFT is a white square (1)
+                                    if (room[y][x - 1] === 1) {
+                                        this.x = (windowWidth / 2 - windowHeight / 2) + (x - 1) * windowHeight / 15 + windowHeight / 30;
+                                        this.y = windowHeight / 30 + y * windowHeight / 15 + windowHeight / 30;
+                                        return;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            /**
+             * Checks if a specific position (nx, ny) overlaps with a wall (Tile 0) in the current room.
+             * @param {number} nx - The future x-coordinate to check.
+             * @param {number} ny - The future y-coordinate to check.
+             * @returns {boolean} True if a collision is detected, false otherwise.
+             */
+            checkGridCollision(nx, ny) {
+                let cellSize = windowHeight / 15;
+                let gridOffsetX = windowWidth / 2 - windowHeight / 2;
+                let gridOffsetY = windowHeight / 30;
+
+                // Use a slightly smaller radius for collision to allow smooth sliding 
+                // and prevent getting stuck on exact tile boundaries
+                let collisionRadius = this.radius * 0.9;
+
+                // We check the bounding box of the player against the grid
+                let points = [
+                    { x: nx - collisionRadius, y: ny - collisionRadius }, // Top Left
+                    { x: nx + collisionRadius, y: ny - collisionRadius }, // Top Right
+                    { x: nx - collisionRadius, y: ny + collisionRadius }, // Bottom Left
+                    { x: nx + collisionRadius, y: ny + collisionRadius }  // Bottom Right
+                ];
+
+                let room = rooms[currentRoomID - 1];
+                if (!room) return true; // Safety: Block movement if room data missing
+
+                for (let p of points) {
+                    // Convert screen coordinate to Grid Index
+                    let col = Math.floor((p.x - gridOffsetX) / cellSize);
+                    let row = Math.floor((p.y - gridOffsetY) / cellSize);
+
+                    // Check 1: Out of Bounds (Stay inside the 15x15 grid)
+                    if (col < 0 || col >= 15 || row < 0 || row >= 15) {
+                        return true;
+                    }
+
+                    // Check 2: Black Square Collision
+                    // If the tile is 0, we are not allowed there.
+                    if (room[row][col] === 0) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            /**
+             * Handles player movement based on keyboard input and checks for collisions.
+             */
+            playerMovement() {
+                let speed = 4;
+                let dx = 0;
+                let dy = 0;
+
+                if (keyIsDown(UP_ARROW)) dy -= speed;
+                if (keyIsDown(DOWN_ARROW)) dy += speed;
+                if (keyIsDown(LEFT_ARROW)) dx -= speed;
+                if (keyIsDown(RIGHT_ARROW)) dx += speed;
+
+                // Move X axis?
+                // We check collision at the FUTURE X position
+                if (!this.checkGridCollision(this.x + dx, this.y)) {
+                    this.x += dx;
+                }
+
+                // Move Y axis?
+                // We check collision at the FUTURE Y position (relative to new or old X, doesn't matter much for axis aligned, 
+                // but separating them allows sliding against walls)
+                if (!this.checkGridCollision(this.x, this.y + dy)) {
+                    this.y += dy;
+                }
+
+                // Note: The previous "velocitylock" logic is removed because this
+                // "predict-and-deny" approach is far more robust for absolute boundaries.
+            }
+
+            /**
+             * Renders the player character on the canvas.
+             */
+            drawPlayer() {
+                fill(255, 0, 0);
+                // Visual size matches roughly the collision size
+                circle(this.x, this.y, 0.9 * (windowHeight / 15));
+            }
+
+            /**
+             * Checks if the player has entered a room transition zone and updates the current room accordingly.
+             */
+            changeRooms() {
+                for (let i = 0; i < roomChangeCollision.length; i++) {
+                    let zoneX = roomChangeCollision[i][0];
+                    let zoneY = roomChangeCollision[i][1];
+                    let zoneSize = roomChangeCollision[i][2];
+                    let zoneType = roomChangeCollision[i][3];
+
+                    let closestX = constrain(this.x, zoneX, zoneX + zoneSize);
+                    let closestY = constrain(this.y, zoneY, zoneY + zoneSize);
+
+                    let distanceX = this.x - closestX;
+                    let distanceY = this.y - closestY;
+
+                    let distanceSquared = (distanceX * distanceX) + (distanceY * distanceY);
+
+                    if (distanceSquared < (this.radius * this.radius)) {
+
+                        if (zoneType === 2) {
+                            if (currentRoomID > 1) {
+                                needsRespawn = true;
+                                addRoomIDNum = false;
+                                currentRoomID--;
+                            }
+                        } else if (zoneType === 3) {
+                            if (currentRoomID < rooms.length) {
+                                needsRespawn = true;
+                                addRoomIDNum = true;
+                                currentRoomID++;
+                            }
+                        }
+                        return;
+                    }
+                }
+            }
+        }
+
+        /**
+         * Initial setup function for p5.js.
+         */
+        function setup() {
+            createCanvas(windowWidth, windowHeight);
+        }
+
+        /**
+         * Main draw loop for p5.js. Handles rendering of the grid and player.
+         */
+        function draw() {
+            background(220);
+            displayGrid();
+            playerMechanics();
+            drawMessage();
+        }
+
+        /**
+         * Handles canvas resizing when the window is resized.
+         */
+        function windowResized() {
+            resizeCanvas(windowWidth, windowHeight);
+        }
+
+        /**
+         * Processes the raw roomData array into a structured 3D array (rooms[room][row][col]).
+         */
+        function processRoomData() {
+            rooms = [];
+            let rowsPerRoom = 15;
+            let currentRoom = [];
+
+            for (let i = 0; i < roomData.length; i++) {
+                currentRoom.push(roomData[i]);
+                if (currentRoom.length === rowsPerRoom) {
+                    rooms.push(currentRoom);
+                    currentRoom = [];
+                }
+            }
+
+            if (currentRoom.length > 0) {
+                rooms.push(currentRoom);
+            }
+
+            roomsLoaded = true;
+        }
+
+        /**
+         * Renders the current room's grid on the canvas.
+         */
+        function displayGrid() {
+            if (roomsLoaded === true && rooms[currentRoomID - 1]) {
+                roomChangeCollision = [];
+                let cellSize = windowHeight / 15;
+                let centerDisplayOffsetX = windowWidth / 2 - windowHeight / 2;
+                let centerDisplayOffsetY = windowHeight / 30
+
+                for (y = 0; y < rooms[currentRoomID - 1].length; y++) {
+                    if (!rooms[currentRoomID - 1][y]) continue;
+
+                    for (x = 0; x < rooms[currentRoomID - 1][y].length; x++) {
+                        let tileType = rooms[currentRoomID - 1][y][x];
+
+                        if (tileType === 0) {
+                            fill(0, 0, 0);
+                            // Wall collision is now handled dynamically in Player class
+                        }
+                        else if (tileType === 2 || tileType === 3) {
+                            fill(225, 225, 0);
+                            addToChangeRoom(y, x, centerDisplayOffsetX, centerDisplayOffsetY, cellSize, tileType);
+                        }
+                        else {
+                            fill(255, 255, 255);
+                        }
+                        square(centerDisplayOffsetX + x * cellSize, centerDisplayOffsetY + y * cellSize, cellSize);
+                    }
+                }
+            }
+        }
+
+        /**
+         * Manages player instantiation, movement, and interaction mechanics.
+         */
+        function playerMechanics() {
+            if (playerCharacter === 0) {
+                playerCharacter = new Player();
+            }
+
+            if (needsRespawn) {
+                playerCharacter = new Player();
+                roomChangeCollision = [];
+                displayGrid();
+                needsRespawn = false;
+                justSpawned = false;
+                return;
+            }
+            playerCharacter.playerMovement();
+            playerCharacter.changeRooms();
+
+            if (playerCharacter === 0) {
+                playerCharacter = new Player();
+            }
+
+            playerCharacter.drawPlayer();
+        }
+
+        /**
+         * Adds a room transition zone to the roomChangeCollision list.
+         * @param {number} yPos - The grid row index.
+         * @param {number} xPos - The grid column index.
+         * @param {number} centerDisplayOffsetX - The horizontal offset for centering the grid.
+         * @param {number} centerDisplayOffsetY - The vertical offset for the grid.
+         * @param {number} cellSize - The size of each grid cell.
+         * @param {number} tileType - The type of tile (2 for left entrance, 3 for right entrance).
+         */
+        function addToChangeRoom(yPos, xPos, centerDisplayOffsetX, centerDisplayOffsetY, cellSize, tileType) {
+            let zoneX = centerDisplayOffsetX + xPos * cellSize;
+            let zoneY = centerDisplayOffsetY + yPos * cellSize;
+            roomChangeCollision.push([zoneX, zoneY, cellSize, tileType]);
+        }
+
+        function drawMessage () {
+          if (currentRoomID === 3) {
+            fill(0);
+            text("We tried our best, but we didn't have time to finish. \n Thanks for playing. \n \n Made by Brayden and Jaydeep \n Special thanks to Mike and Gemini 3 for debugging", playerCharacter.x, playerCharacter.y+windowHeight/7.5);
+            textAlign(CENTER);
+          }
+        }
+    </script>
+
+</body>
+
 </html>
